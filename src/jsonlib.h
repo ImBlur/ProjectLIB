@@ -54,7 +54,7 @@ class JSON {
         void RemoveSpecialCharacters(std::vector<std::string> &v){
             for(int i = v.size() - 1; i >= 0; i--){
                 bool good = false;
-                for(auto l : v[i]) if((l >= 'A' && l <= 'Z') || (l >= 'a' && l <= 'z')) good = true;
+                for(auto l : v[i]) if((l >= 'A' && l <= 'Z') || (l >= 'a' && l <= 'z') || (l >= '0' && l <= '9')) good = true;
                 if(!good) v.erase(v.begin() + i);
             }
         }
@@ -97,7 +97,7 @@ class JSON {
             file << "\n}";
         }
 
-        // TODO: Implement functionality for more complex json files. Currently supports only the examples in "test2.json"
+        // TODO: Implement functionality for json objects. Currently supports only the examples in "test2.json"
         void JSONToMap(std::string jsonFile){
             std::ifstream file(jsonFile);
 
@@ -122,12 +122,14 @@ class JSON {
             }
             
             RemoveSpecialCharacters(matches);
+            // for(int i = 0; i < matches.size(); i++) std::cout << "match " << i + 1 << ": " << matches[i] << "\n";
 
             jsonmap.clear();
             for(int i = matches.size() - 1; i >= 0; i--){
                 if(*std::prev(matches[i].end(), 1).base() == ':'){
-                    std::cout << i << " " << GetIndex(i, matches) << "\n";
-                    jsonmap.insert(CreatePair(i, GetIndex(i, matches), matches));
+                    // std::cout << i << " " << GetIndex(i, matches) << "\n";
+                    std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
+                    jsonmap.insert(pair);
                 }
             }
             matches.clear();
