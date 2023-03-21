@@ -1,2 +1,6 @@
 .vscode/*.*
 src/*.exe
+src/Makefile
+src/output.log
+src/test/*.*
+expected.log
