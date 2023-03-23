@@ -46,7 +46,7 @@ class JSON {
 
         int GetIndex(int startIndex, std::vector<std::string> v){
             for(int i = startIndex + 1; i < v.size(); i++){
-                if(*(std::prev(v[i].end()).base()) == ':') return i - 1;
+                if(*(std::prev(v[i].end()).base()) == '\n') return i;
             }
             return v.size() - 1;
         }
@@ -97,7 +97,6 @@ class JSON {
             file << "\n}";
         }
 
-        // TODO: Implement functionality for json objects. Currently supports only the examples in "test2.json"
         void JSONToMap(std::string jsonFile){
             std::ifstream file(jsonFile);
 
@@ -108,7 +107,7 @@ class JSON {
 
             if(!CheckJSON(jsonFile)) return;
 
-            std::regex regexRule("[[:graph:]]+");
+            std::regex regexRule("[[:graph:]]+\\n?");
             std::smatch match;
 
             std::string line;
@@ -121,13 +120,13 @@ class JSON {
                 }
             }
             
-            RemoveSpecialCharacters(matches);
+            matches.erase(matches.begin());
+            matches.erase(std::prev(matches.end(), 1));
             // for(int i = 0; i < matches.size(); i++) std::cout << "match " << i + 1 << ": " << matches[i] << "\n";
 
             jsonmap.clear();
-            for(int i = matches.size() - 1; i >= 0; i--){
+            for(int i = 0; i < matches.size(); i++){
                 if(*std::prev(matches[i].end(), 1).base() == ':'){
-                    // std::cout << i << " " << GetIndex(i, matches) << "\n";
                     std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
                     jsonmap.insert(pair);
                 }
