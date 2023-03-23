@@ -1,3 +1,7 @@
-.vscode/settings.json
-.vscode/tasks.json
-src/a.exe
+.vscode/*.*
+src/*.exe
+src/Makefile
+src/output.log
+src/test/*.*
+expected.log
+TODO
