@@ -1,4 +1,3 @@
-#include <map>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -8,7 +7,7 @@
 
 class JSON {
     private:
-        std::map<std::string, std::string> jsonmap;
+        std::vector<std::pair<std::string, std::string>> jsonmap;
 
         bool CheckJSON(std::string filePath){
             std::ifstream file(filePath);
@@ -78,15 +77,54 @@ class JSON {
             jsonmap.clear();
         }
 
-        JSON(std::map<std::string, std::string> map){
+        JSON(std::vector<std::pair<std::string, std::string>> map){
             jsonmap = map;
         }
 
-        std::map<std::string, std::string> getMap(){
+        std::vector<std::pair<std::string, std::string>> getMap(){
             return jsonmap;
         }
 
-        void MapToJSON(std::string filePath, bool cout=false){
+        void StringToJSON(std::string jsonString){
+            std::regex regexRule("[[:graph:]]+\\n?");
+            std::smatch match;
+
+            std::vector<std::string> matches;
+
+            while(std::regex_search(jsonString, match, regexRule)){
+                matches.push_back(match.str());
+                jsonString = match.suffix().str();
+            }
+
+            matches.erase(matches.begin());
+            matches.erase(std::prev(matches.end(), 1));
+
+            jsonmap.clear();
+            for(int i = 0; i < matches.size(); i++){
+                if(*std::prev(matches[i].end(), 1).base() != ':') continue;
+
+                // std::cout << i << " " << GetIndex(i, matches) << "\n";
+                std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
+                pair.second.erase(std::prev(pair.second.end()));
+                // std::cout << "pair: " << pair.first << " " << pair.second << "\n";
+                jsonmap.push_back(pair);
+                i--;
+            }
+            matches.clear();
+        }
+
+        std::string JSONToString(){
+            if(jsonmap.empty()) return "";
+            std::string temp = "{ ";
+            for(auto pair : jsonmap){
+                temp += pair.first + " " + pair.second + "\n";
+            }
+            temp += " }";
+            return temp;
+        }
+
+        void MapToJSONFile(std::string filePath){
+            if(jsonmap.empty()) return;
             std::ofstream file(filePath, std::ios_base::app);
 
             file << "{\n";
@@ -97,7 +135,7 @@ class JSON {
             file << "\n}";
         }
 
-        void JSONToMap(std::string jsonFile){
+        void JSONFileToMap(std::string jsonFile){
             std::ifstream file(jsonFile);
 
             if(!file.is_open()){
@@ -111,25 +149,42 @@ class JSON {
             std::smatch match;
 
             std::string line;
+            std::string fileContent = "";
             std::vector<std::string> matches;
 
             while(getline(file, line)){
-                while(std::regex_search(line, match, regexRule)){
-                    matches.push_back(match.str());
-                    line = match.suffix().str();
-                }
+                fileContent += line + "\n";
+            }
+
+            // std::cout << fileContent;
+
+            while(std::regex_search(fileContent, match, regexRule)){
+                matches.push_back(match.str());
+                fileContent = match.suffix().str();
             }
             
             matches.erase(matches.begin());
             matches.erase(std::prev(matches.end(), 1));
-            // for(int i = 0; i < matches.size(); i++) std::cout << "match " << i + 1 << ": " << matches[i] << "\n";
+            // for(int i = 0; i < matches.size(); i++){
+            //     std::cout << "match " << i + 1 << ": ";
+            //     for(auto s : matches[i]){
+            //         if(s == '\n') std::cout << "\\n";
+            //         else std::cout << s;
+            //         // std::cout << s;
+            //     }
+            //     std::cout << "\n";
+            // }
 
             jsonmap.clear();
             for(int i = 0; i < matches.size(); i++){
-                if(*std::prev(matches[i].end(), 1).base() == ':'){
-                    std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
-                    jsonmap.insert(pair);
-                }
+                if(*std::prev(matches[i].end(), 1).base() != ':') continue;
+
+                // std::cout << i << " " << GetIndex(i, matches) << "\n";
+                std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
+                pair.second.erase(std::prev(pair.second.end()));
+                // std::cout << "pair: " << pair.first << " " << pair.second << "\n";
+                jsonmap.push_back(pair);
+                i--;
             }
             matches.clear();
         }
