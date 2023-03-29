@@ -1,3 +1,6 @@
+#ifndef JSONLIB
+#define JSONLIB
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -189,3 +192,4 @@ class JSON {
             matches.clear();
         }
 };
+#endif
