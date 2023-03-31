@@ -1,10 +1,8 @@
 #ifndef REQUESTLIB
 #define REQUESTLIB
-#include "./jsonlib.h"
 
 #include <iostream>
 #include <string>
-#include <vector>
 #include <winsock2.h>
 #include <windows.h>
 
@@ -39,18 +37,19 @@ class Request {
 
             SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-            char temp[BUFFER_SIZE];
-
             if(connect(serverSocket, (const SOCKADDR *) &serverInfo, sizeof(serverInfo)) == SOCKET_ERROR){
                 std::cout << "connection error: " << WSAGetLastError();
                 return response;
             }
             
+            if(buffer == "") SetBuffer(" ");
+
             if(!send(serverSocket, buffer, (int) strlen(buffer), 0)){
                 std::cout << "failed to send message: " << WSAGetLastError();
                 return response;
             }
 
+            char temp[BUFFER_SIZE];
             while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat(response, temp);
 
             closesocket(serverSocket);
@@ -76,6 +75,15 @@ class GETRequest: public Request {
             MergeHeader();
             return Request::Send();
         }
+
+        std::string StripData(){
+            std::string resp = response;
+
+            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
+
+            resp.clear();
+            return resp;
+        }
 };
 
 class POSTRequest: public Request {
@@ -94,6 +102,15 @@ class POSTRequest: public Request {
             MergeHeader();
             return Request::Send();
         }
+
+        std::string StripData(){
+            std::string resp = response;
+
+            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
+            
+            resp.clear();
+            return resp;
+        }
 };
 
 class PUTRequest: public Request {
@@ -109,6 +126,15 @@ class PUTRequest: public Request {
         char* Send(){
             MergeHeader();
             return Request::Send();
+        }
+
+        std::string StripData(){
+            std::string resp = response;
+
+            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
+            
+            resp.clear();
+            return resp;
         }
 };
 
