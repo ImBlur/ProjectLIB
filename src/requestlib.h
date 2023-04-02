@@ -79,7 +79,7 @@ class GETRequest: public Request {
         std::string StripData(){
             std::string resp = response;
 
-            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
+            for(int i = 0; i < resp.size(); i++) if(resp[i] == '<' || resp[i] == '{') return resp.substr(i);
 
             resp.clear();
             return resp;
@@ -106,8 +106,8 @@ class POSTRequest: public Request {
         std::string StripData(){
             std::string resp = response;
 
-            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
-            
+            for(int i = 0; i < resp.size(); i++) if(resp[i] == '<' || resp[i] == '{') return resp.substr(i);
+
             resp.clear();
             return resp;
         }
@@ -131,8 +131,8 @@ class PUTRequest: public Request {
         std::string StripData(){
             std::string resp = response;
 
-            for(int i = 0; i < resp.size(); i++) if(resp[i] != '<' && resp[i] != '{') return resp.substr(i);
-            
+            for(int i = 0; i < resp.size(); i++) if(resp[i] == '<' || resp[i] == '{') return resp.substr(i);
+
             resp.clear();
             return resp;
         }
@@ -146,6 +146,11 @@ class DELETERequest: public Request {
     public:
         DELETERequest(const char* address, int port, const char* url, std::string mode="json"): Request(address, port){
             snprintf(requestHeader, REQUEST_HEADER_SIZE, "DELETE %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url);
+        }
+
+        char* Send(){
+            MergeHeader();
+            return Request::Send();
         }
 };
 
