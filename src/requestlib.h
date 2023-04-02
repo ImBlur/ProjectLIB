@@ -6,7 +6,6 @@
 #include <winsock2.h>
 #include <windows.h>
 
-// #define BUFFER_SIZE 4096
 #define BUFFER_SIZE 262144
 #define REQUEST_HEADER_SIZE 1024
 
@@ -65,7 +64,7 @@ class GETRequest: public Request {
     void MergeHeader(){ strcat(buffer, requestHeader); }
 
     public:
-        GETRequest(const char* address, int port, const char* url, std::string mode="html"): Request(address, port){
+        GETRequest(const char* address, int port, const char* url, const char* mode="html"): Request(address, port){
             if(mode == "json") snprintf(requestHeader, REQUEST_HEADER_SIZE, "GET %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n\n", url, address);
 
             else snprintf(requestHeader, REQUEST_HEADER_SIZE, "GET %s HTTP/1.0\r\n\r\n", url);
@@ -92,7 +91,7 @@ class POSTRequest: public Request {
     void MergeHeader(){ strcat(buffer, requestHeader); }
 
     public:
-        POSTRequest(const char* address, int port, const char* url, std::string mode="html"): Request(address, port){
+        POSTRequest(const char* address, int port, const char* url, const char* mode="html"): Request(address, port){
             if(mode == "json") snprintf(requestHeader, REQUEST_HEADER_SIZE, "POST %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url);
             
             else snprintf(requestHeader, REQUEST_HEADER_SIZE, "POST %s HTTP/1.0\r\n\r\n", url, address);
@@ -119,7 +118,7 @@ class PUTRequest: public Request {
     void MergeHeader(){ strcat(buffer, requestHeader); }
 
     public:
-        PUTRequest(const char* address, int port, const char* url, std::string mode="json"): Request(address, port){
+        PUTRequest(const char* address, int port, const char* url, const char* mode="json"): Request(address, port){
             snprintf(requestHeader, REQUEST_HEADER_SIZE, "PUT %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url);
         }
 
@@ -144,7 +143,7 @@ class DELETERequest: public Request {
     void MergeHeader(){ strcat(buffer, requestHeader); }
 
     public:
-        DELETERequest(const char* address, int port, const char* url, std::string mode="json"): Request(address, port){
+        DELETERequest(const char* address, int port, const char* url, const char* mode="json"): Request(address, port){
             snprintf(requestHeader, REQUEST_HEADER_SIZE, "DELETE %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url);
         }
 
