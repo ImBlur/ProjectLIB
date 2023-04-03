@@ -1,3 +1,6 @@
+#ifndef JSONLIB
+#define JSONLIB
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -103,10 +106,8 @@ class JSON {
             for(int i = 0; i < matches.size(); i++){
                 if(*std::prev(matches[i].end(), 1).base() != ':') continue;
 
-                // std::cout << i << " " << GetIndex(i, matches) << "\n";
                 std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
                 pair.second.erase(std::prev(pair.second.end()));
-                // std::cout << "pair: " << pair.first << " " << pair.second << "\n";
                 jsonmap.push_back(pair);
                 i--;
             }
@@ -156,8 +157,6 @@ class JSON {
                 fileContent += line + "\n";
             }
 
-            // std::cout << fileContent;
-
             while(std::regex_search(fileContent, match, regexRule)){
                 matches.push_back(match.str());
                 fileContent = match.suffix().str();
@@ -165,27 +164,17 @@ class JSON {
             
             matches.erase(matches.begin());
             matches.erase(std::prev(matches.end(), 1));
-            // for(int i = 0; i < matches.size(); i++){
-            //     std::cout << "match " << i + 1 << ": ";
-            //     for(auto s : matches[i]){
-            //         if(s == '\n') std::cout << "\\n";
-            //         else std::cout << s;
-            //         // std::cout << s;
-            //     }
-            //     std::cout << "\n";
-            // }
 
             jsonmap.clear();
             for(int i = 0; i < matches.size(); i++){
                 if(*std::prev(matches[i].end(), 1).base() != ':') continue;
 
-                // std::cout << i << " " << GetIndex(i, matches) << "\n";
                 std::pair<std::string, std::string> pair = CreatePair(i, GetIndex(i, matches), matches);
                 pair.second.erase(std::prev(pair.second.end()));
-                // std::cout << "pair: " << pair.first << " " << pair.second << "\n";
                 jsonmap.push_back(pair);
                 i--;
             }
             matches.clear();
         }
 };
+#endif
