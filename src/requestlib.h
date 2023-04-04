@@ -151,6 +151,15 @@ class DELETERequest: public Request {
             MergeHeader();
             return Request::Send();
         }
+
+        std::string StripData(){
+            std::string resp = response;
+
+            for(int i = 0; i < resp.size(); i++) if(resp[i] == '<' || resp[i] == '{') return resp.substr(i);
+
+            resp.clear();
+            return resp;
+        }
 };
 
 class HEADRequest: public Request {
