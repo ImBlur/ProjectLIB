@@ -50,3 +50,83 @@ Functions:
 - `char* Send(void)` - sends the request and returns the response
 - `std::string StripData()` - strips the request header from the data and returns the data (json or html)
   - !!! `HEADRequest` does not have this function !!!
+
+### Timer Lib
+
+Adds the ability to monitor code execution time using a class `Timer` that is inside the `utils` namespace. It will print the time it took to executed the code in microseconds and miliseconds
+
+Examples:
+
+- Monitor the entire code:
+
+```cpp
+#include "timer.h"
+
+int main(){
+  utils::Timer t;
+  // your code goes here
+}
+```
+
+- Monitor a specific part of the code:
+
+```cpp
+#include "timer.h"
+
+int main(){
+  //some code here
+
+  {
+    utils::Timer t;
+    //code you want to time here
+  }
+
+}
+```
+
+### TextColor Lib
+
+Implements a nice and easy way to work with colored text. Everything added by this library can be found in `utils` namespace
+
+Example:
+
+```cpp
+#include "textcolor.h"
+
+#include <iostream>
+
+int main(){
+  utils::TextColor color(utils::color::FG_RED); // creates a red font color
+  utils::TextColor def(utils::color::FG_DEFAULT); // resets the font color to the default one
+
+  // FG = foreground (font color)
+  // BG = background (background color)
+
+  std::cout << "This " << color << "word" << def << "is red"; // prints "This *word* (with red font) is red"
+  
+  // Everything after `color` will have the font color red. Everything after `def` will be the default color
+}
+```
+
+### Prints Lib
+
+Implements functions to handle errors and warnings. Everything inside this library can be found in the `utils` namespace.
+
+Example:
+
+```cpp
+#include "prints.h"
+
+#include <vector>
+
+int main(){
+  std::vector<int> v;
+
+  if(v.empty()){
+    utils::error("The vector is empty"); // prints an error message that the vector is empty
+    return 0;
+  }
+
+  utils::warning("The vector contains at least one element"); // prints a warning that the vector contains at least one element
+}
+```
