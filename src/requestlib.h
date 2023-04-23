@@ -153,7 +153,7 @@ class POSTRequest: public Request {
 
     public:
         POSTRequest(const char* address, int port, const char* url, Mode mode): Request(address, port){
-            if(mode == 0) snprintf(requestHeader, REQUEST_HEADER_SIZE, "POST %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url);
+            if(mode == 0) snprintf(requestHeader, REQUEST_HEADER_SIZE, "POST %s HTTP/1.0\nHOST: %s\nContent-Type:application/json\nAccept:application/json\n", url, address);
             
             else snprintf(requestHeader, REQUEST_HEADER_SIZE, "POST %s HTTP/1.0\r\n\r\n", url, address);
         }
