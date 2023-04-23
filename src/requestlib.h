@@ -11,6 +11,62 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+class Server {
+    SOCKADDR_IN serverInfo = {0};
+    char buffer[BUFFER_SIZE] = "";
+
+    public:
+        Server(const char* serverAddress, const int serverPort){
+            serverInfo.sin_addr.S_un.S_addr = inet_addr(serverAddress);
+            serverInfo.sin_port = htons(serverPort);
+            serverInfo.sin_family = AF_INET;
+        }
+
+        void Receive(const bool whileRecv){
+            WSADATA wsadata;
+            WSAStartup(MAKEWORD(2,2), &wsadata);
+
+            SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+            
+            bind(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo));
+            listen(serverSocket, 0);
+
+            SOCKADDR_IN clientInfo = {0};
+            int clientSize = sizeof(clientInfo);
+
+            SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
+            if(whileRecv) while(recv(clientSocket, buffer, BUFFER_SIZE, 0) > 0) printf("%s\n", buffer);
+            else{
+                recv(clientSocket, buffer, BUFFER_SIZE, 0);
+                printf("%s\n", buffer);
+            }
+
+            closesocket(clientSocket);
+            closesocket(serverSocket);
+            WSACleanup();
+        }
+
+        void Send(const char* message){
+            WSADATA wsadata;
+            WSAStartup(MAKEWORD(2,2), &wsadata);
+
+            SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+            
+            bind(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo));
+            listen(serverSocket, 0);
+
+            SOCKADDR_IN clientInfo = {0};
+            int clientSize = sizeof(clientInfo);
+
+            SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
+            send(clientSocket, message, (int) strlen(message), 0);
+
+            closesocket(clientSocket);
+            closesocket(serverSocket);
+            WSACleanup();
+        }
+};
+
 class Request {
     SOCKADDR_IN serverInfo = {0};
     
