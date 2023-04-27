@@ -35,10 +35,14 @@ class Server {
             int clientSize = sizeof(clientInfo);
 
             SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
-            if(whileRecv) while(recv(clientSocket, buffer, BUFFER_SIZE, 0) > 0) printf("%s\n", buffer);
+            if(whileRecv) while(recv(clientSocket, buffer, BUFFER_SIZE, 0) > 0){
+                printf("%s\n", buffer);
+                memset(buffer, 0,BUFFER_SIZE);
+            }
             else{
                 recv(clientSocket, buffer, BUFFER_SIZE, 0);
                 printf("%s\n", buffer);
+                memset(buffer, 0, BUFFER_SIZE);
             }
 
             closesocket(clientSocket);
@@ -88,12 +92,10 @@ class Request {
 
         Request(const char* address, int port, const char* message): Request(address, port){ SetBuffer(message); }
 
-        void SetBuffer(const char* newBuffer) { strcpy(buffer, newBuffer); }
+        void SetBuffer(const char* newBuffer) { strcpy_s(buffer, BUFFER_SIZE, newBuffer); }
         char* GetBuffer() { return buffer; }
 
-        char* Send(){
-            if(buffer == "") return nullptr;
-
+        SOCKET Connect(){
             WSADATA wsaData;
             WSAStartup(MAKEWORD(2,2), &wsaData);
 
@@ -101,8 +103,16 @@ class Request {
 
             if(connect(serverSocket, (const SOCKADDR *) &serverInfo, sizeof(serverInfo)) == SOCKET_ERROR){
                 std::cout << "connection error: " << WSAGetLastError();
-                return nullptr;
+                return -1;
             }
+            WSACleanup();
+            return serverSocket;
+        }
+
+        char* Send(){
+            if(buffer == "") return nullptr;
+
+            SOCKET serverSocket = Connect();
 
             if(!send(serverSocket, buffer, (int) strlen(buffer), 0)){
                 std::cout << "failed to send message: " << WSAGetLastError();
@@ -110,11 +120,24 @@ class Request {
             }
 
             char temp[BUFFER_SIZE];
-            while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat(response, temp);
+            while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat_s(response, BUFFER_SIZE, temp);
 
             closesocket(serverSocket);
-            WSACleanup();
+            return response;
+        }
 
+        char* Send(SOCKET serverSocket){
+            if(buffer == "") return nullptr;
+
+            if(!send(serverSocket, buffer, (int) strlen(buffer), 0)){
+                std::cout << "failed to send mesasge: " << WSAGetLastError();
+                return nullptr;
+            }
+
+            char temp[BUFFER_SIZE];
+            while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat_s(response, BUFFER_SIZE, temp);
+
+            closesocket(serverSocket);
             return response;
         }
 };
