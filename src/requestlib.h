@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <winsock2.h>
 #include <windows.h>
 
@@ -13,31 +14,32 @@
 
 class Server {
     SOCKADDR_IN serverInfo = {0};
+    SOCKET serverSocket = -1;
+    WSADATA wsaData;
+
+    std::vector<SOCKET> connections;
+
     char buffer[BUFFER_SIZE] = "";
 
     public:
-        Server(const char* serverAddress, const int serverPort){
+        Server(const char* serverAddress, const int serverPort, int maxConnections = 0){
+            WSAStartup(MAKEWORD(2,2), &wsaData);
+
             serverInfo.sin_addr.S_un.S_addr = inet_addr(serverAddress);
             serverInfo.sin_port = htons(serverPort);
             serverInfo.sin_family = AF_INET;
+
+            if(maxConnections != 0) connections.assign(maxConnections, -1);
         }
 
+        ~Server(){ closesocket(serverSocket); WSACleanup(); }
+
         void Receive(const bool whileRecv){
-            WSADATA wsadata;
-            WSAStartup(MAKEWORD(2,2), &wsadata);
+            SOCKET clientSocket = Connect();
 
-            SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-            
-            bind(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo));
-            listen(serverSocket, 0);
-
-            SOCKADDR_IN clientInfo = {0};
-            int clientSize = sizeof(clientInfo);
-
-            SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
             if(whileRecv) while(recv(clientSocket, buffer, BUFFER_SIZE, 0) > 0){
                 printf("%s\n", buffer);
-                memset(buffer, 0,BUFFER_SIZE);
+                memset(buffer, 0, BUFFER_SIZE);
             }
             else{
                 recv(clientSocket, buffer, BUFFER_SIZE, 0);
@@ -46,33 +48,43 @@ class Server {
             }
 
             closesocket(clientSocket);
-            closesocket(serverSocket);
-            WSACleanup();
         }
 
         void Send(const char* message){
-            WSADATA wsadata;
-            WSAStartup(MAKEWORD(2,2), &wsadata);
-
-            SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+            if(serverSocket == SOCKET_ERROR) serverSocket = socket(AF_INET, SOCK_STREAM, 0);
             
-            bind(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo));
-            listen(serverSocket, 0);
+            SOCKET clientSocket = Connect();
+            send(clientSocket, message, (int) strlen(message), 0);
+        }
+
+    private:
+        SOCKET Connect(){
+            if(serverSocket == SOCKET_ERROR){
+                serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+                bind(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo));
+                listen(serverSocket, 0);
+            }
 
             SOCKADDR_IN clientInfo = {0};
             int clientSize = sizeof(clientInfo);
 
             SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
-            send(clientSocket, message, (int) strlen(message), 0);
-
-            closesocket(clientSocket);
-            closesocket(serverSocket);
-            WSACleanup();
+            return clientSocket;
         }
+
+        void Disconnect(){
+            if(serverSocket == SOCKET_ERROR) { std::cout << "socket does not exist"; return; }
+            for(auto s : connections) closesocket(s);
+            connections.clear();
+        }
+
 };
 
 class Request {
     SOCKADDR_IN serverInfo = {0};
+    SOCKET serverSocket = -1;
+    WSADATA wsaData;
     
     protected:
         char buffer[BUFFER_SIZE] = "";
@@ -85,6 +97,8 @@ class Request {
         };
 
         Request(const char* address, int port){
+            WSAStartup(MAKEWORD(2,2), &wsaData);
+
             serverInfo.sin_family = AF_INET;
             serverInfo.sin_port = htons(port);
             serverInfo.sin_addr.S_un.S_addr = inet_addr(address);
@@ -92,27 +106,22 @@ class Request {
 
         Request(const char* address, int port, const char* message): Request(address, port){ SetBuffer(message); }
 
+        ~Request(){ closesocket(serverSocket); WSACleanup(); }
+
         void SetBuffer(const char* newBuffer) { strcpy_s(buffer, BUFFER_SIZE, newBuffer); }
         char* GetBuffer() { return buffer; }
 
-        SOCKET Connect(){
-            WSADATA wsaData;
-            WSAStartup(MAKEWORD(2,2), &wsaData);
-
-            SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+        void Connect(){
+            if(serverSocket == SOCKET_ERROR) serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
             if(connect(serverSocket, (const SOCKADDR *) &serverInfo, sizeof(serverInfo)) == SOCKET_ERROR){
                 std::cout << "connection error: " << WSAGetLastError();
-                return -1;
+                return;
             }
-            WSACleanup();
-            return serverSocket;
         }
 
         char* Send(){
             if(buffer == "") return nullptr;
-
-            SOCKET serverSocket = Connect();
 
             if(!send(serverSocket, buffer, (int) strlen(buffer), 0)){
                 std::cout << "failed to send message: " << WSAGetLastError();
@@ -122,22 +131,6 @@ class Request {
             char temp[BUFFER_SIZE];
             while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat_s(response, BUFFER_SIZE, temp);
 
-            closesocket(serverSocket);
-            return response;
-        }
-
-        char* Send(SOCKET serverSocket){
-            if(buffer == "") return nullptr;
-
-            if(!send(serverSocket, buffer, (int) strlen(buffer), 0)){
-                std::cout << "failed to send mesasge: " << WSAGetLastError();
-                return nullptr;
-            }
-
-            char temp[BUFFER_SIZE];
-            while(recv(serverSocket, temp, BUFFER_SIZE, 0) > 0) strcat_s(response, BUFFER_SIZE, temp);
-
-            closesocket(serverSocket);
             return response;
         }
 };
