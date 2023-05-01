@@ -17,19 +17,15 @@ class Server {
     SOCKET serverSocket = -1;
     WSADATA wsaData;
 
-    std::vector<SOCKET> connections;
-
     char buffer[BUFFER_SIZE] = "";
 
     public:
-        Server(const char* serverAddress, const int serverPort, int maxConnections = 0){
+        Server(const char* serverAddress, const int serverPort){
             WSAStartup(MAKEWORD(2,2), &wsaData);
 
             serverInfo.sin_addr.S_un.S_addr = inet_addr(serverAddress);
             serverInfo.sin_port = htons(serverPort);
             serverInfo.sin_family = AF_INET;
-
-            if(maxConnections != 0) connections.assign(maxConnections, -1);
         }
 
         ~Server(){ closesocket(serverSocket); WSACleanup(); }
@@ -72,13 +68,6 @@ class Server {
             SOCKET clientSocket = accept(serverSocket, (SOCKADDR *) &clientInfo, &clientSize);
             return clientSocket;
         }
-
-        void Disconnect(){
-            if(serverSocket == SOCKET_ERROR) { std::cout << "socket does not exist"; return; }
-            for(auto s : connections) closesocket(s);
-            connections.clear();
-        }
-
 };
 
 class Request {
@@ -104,21 +93,12 @@ class Request {
             serverInfo.sin_addr.S_un.S_addr = inet_addr(address);
         }
 
-        Request(const char* address, int port, const char* message): Request(address, port){ SetBuffer(message); }
+        Request(const char* address, int port, const char* message): Request(address, port){ SetBuffer(message); Connect(); }
 
         ~Request(){ closesocket(serverSocket); WSACleanup(); }
 
         void SetBuffer(const char* newBuffer) { strcpy_s(buffer, BUFFER_SIZE, newBuffer); }
         char* GetBuffer() { return buffer; }
-
-        void Connect(){
-            if(serverSocket == SOCKET_ERROR) serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-            if(connect(serverSocket, (const SOCKADDR *) &serverInfo, sizeof(serverInfo)) == SOCKET_ERROR){
-                std::cout << "connection error: " << WSAGetLastError();
-                return;
-            }
-        }
 
         char* Send(){
             if(buffer == "") return nullptr;
@@ -133,6 +113,16 @@ class Request {
 
             return response;
         }
+
+        private:
+            void Connect(){
+                if(serverSocket == SOCKET_ERROR) serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+                
+                if(connect(serverSocket, (SOCKADDR *) &serverInfo, sizeof(serverInfo)) == SOCKET_ERROR){
+                    std::cout << "connection error: " << WSAGetLastError();
+                    return;
+                }
+            }
 };
 
 class GETRequest: public Request {
